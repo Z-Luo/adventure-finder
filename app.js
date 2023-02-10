@@ -3,6 +3,8 @@ const morgan = require('morgan');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const http = require('http');
+const AppError = require('./utils/appErrors');
+const globalErrorHandler = require('./controllers/errorController');
 
 const app = express();
 
@@ -32,13 +34,13 @@ app.use(morgan('dev'));
 
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
-
+//error handler for wrong endpoint
 app.all('*', (req, res, next) => {
-  return res.status(404).json({
-    status: 'fail',
-    message: `Can's find ${req.originalUrl} on this server!`,
-  });
+  next(new AppError(`Can's find ${req.originalUrl} on this server!`, 404));
 });
+// centralized
+app.use(globalErrorHandler);
+
 //users
 
 module.exports = app;

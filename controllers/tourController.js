@@ -1,7 +1,8 @@
 // const express = require('express');
-const { response } = require('../app');
-const Tour = require('./../models/tourModel');
-const APIFeatures = require('./../utils/apiFeatures');
+// const { response } = require('../app');
+const Tour = require('../models/tourModel');
+const APIFeatures = require('../utils/apiFeatures');
+const AppError = require('./../utils/appErrors');
 
 // exports.checkBody = (req, res, next) => {
 //   if (!req.body.hasOwnProperty('name') || !req.body.hasOwnProperty('price')) {
@@ -87,6 +88,7 @@ exports.getAllTours = async (req, res) => {
 exports.createTour = async (req, res) => {
   try {
     const newTour = await Tour.create(req.body);
+
     res.status(201).json({
       status: 'success',
       data: { tour: newTour },
@@ -99,44 +101,42 @@ exports.createTour = async (req, res) => {
   }
 };
 
-exports.updateTour = async (req, res) => {
+exports.updateTour = async (req, res, next) => {
   try {
     const tour = await Tour.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
+    if (!tour) throw new AppError();
     res.status(200).json({
       status: 'success',
       data: { tour },
     });
   } catch (err) {
-    res.status(400).json({
-      status: 'failed',
-      message: 'no good',
-    });
+    next(new AppError(`Can't find ${req.originalUrl}, invalid ID`, 400));
   }
 };
 
-exports.deleteTour = async (req, res) => {
+exports.deleteTour = async (req, res, next) => {
   try {
-    await Tour.findByIdAndDelete(req.params.id);
+    const tour = await Tour.findByIdAndDelete(req.params.id);
+    if (!tour) throw new AppError();
     res.status(204).json({
       status: 'success',
     });
   } catch (err) {
-    res.status(400).json({
-      status: 'failed',
-      message: 'no good',
-    });
+    next(new AppError(`Can't find ${req.originalUrl}, invalid ID`, 400));
   }
 };
 
-exports.getTour = async (req, res) => {
+exports.getTour = async (req, res, next) => {
   try {
     const tour = await Tour.findById(req.params.id);
+    if (!tour) throw new AppError();
+
     res.status(200).json({ status: 'success', data: tour });
   } catch (err) {
-    res.status(400).json({ status: 'failed', message: 'no good' });
+    next(new AppError(`Can't find ${req.originalUrl}, invalid ID`, 400));
   }
 
   // const tour = toursData.find((el) => {
